@@ -134,11 +134,12 @@ class Bossleft(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.move_ip(Bossleft.speed,0)
-        if not SCREENRECT.contains(self.rect):
-            Bossleft.speed = -Bossleft.speed
-            #self.rect.top = self.rect.bottom + 1
-            self.rect = self.rect.clamp(SCREENRECT)
-        self.frame = self.frame + 1
+        if not SCREENRECT.colliderect(self.rect):
+            self.kill()
+#            Bossleft.speed = -Bossleft.speed
+#            self.rect.top = self.rect.bottom + 1
+#            self.rect = self.rect.clamp(SCREENRECT)
+#        self.frame = self.frame + 1
 #        self.image = self.images[self.frame//self.animcycle%3]
 
 class Bossright(pygame.sprite.Sprite):
@@ -155,11 +156,12 @@ class Bossright(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.move_ip(Bossright.speed,0)
-        if not SCREENRECT.contains(self.rect):
-            Bossright.speed = -Bossright.speed
-            #self.rect.top = self.rect.bottom + 1
-            self.rect = self.rect.clamp(SCREENRECT)
-        self.frame = self.frame + 1
+        if not SCREENRECT.colliderect(self.rect):
+            self.kill()
+#            Bossright.speed = -Bossright.speed
+#            self.rect.top = self.rect.bottom + 1
+#            self.rect = self.rect.clamp(SCREENRECT)
+#        self.frame = self.frame + 1
 #        self.image = self.images[self.frame//self.animcycle%3]
 
 class Shield(pygame.sprite.Sprite):
