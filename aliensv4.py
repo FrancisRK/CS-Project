@@ -44,21 +44,6 @@ def load_images(*files):
     return imgs
 
 
-class dummysound:
-    def play(self): pass
-
-def load_sound(file):
-    if not pygame.mixer: return dummysound()
-    file = os.path.join(main_dir, 'data', file)
-    try:
-        sound = pygame.mixer.Sound(file)
-        return sound
-    except pygame.error:
-        print ('Warning, unable to load, %s' % file)
-    return dummysound()
-
-
-
 # each type of game object gets an init and an
 # update function. the update function is called
 # once per frame, and it is when each object should
@@ -263,13 +248,8 @@ class Finalscore(pygame.sprite.Sprite):
 
 def main(winstyle = 0):
     # Initialize pygame
-    #pygame.init()
     pygame.display.init()
     pygame.font.init()
-
-    if pygame.mixer and not pygame.mixer.get_init():
-        print ('Warning, no sound')
-        pygame.mixer = None
 
     # Set the display mode
     winstyle = 0  # |FULLSCREEN
@@ -302,14 +282,6 @@ def main(winstyle = 0):
         background.blit(bgdtile, (x, 0))
     screen.blit(background, (0,0))
     pygame.display.flip()
-
-    #load the sound effects
-    boom_sound = load_sound('boom.wav')
-    shoot_sound = load_sound('car_door.wav')
-    if pygame.mixer:
-        music = os.path.join(main_dir, 'data', 'house_lo.wav')
-        pygame.mixer.music.load(music)
-        pygame.mixer.music.play(-1)
 
     # Initialize Game Groups
     aliens = pygame.sprite.Group()
@@ -369,7 +341,6 @@ def main(winstyle = 0):
         firing = keystate[K_SPACE]
         if not player.reloading and firing and len(shots) < MAX_SHOTS:
             Shot(player.gunpos())
-            shoot_sound.play()
         player.reloading = firing
 
         # Create new alien
@@ -389,19 +360,16 @@ def main(winstyle = 0):
 
         # Detect collisions
         for alien in pygame.sprite.spritecollide(player, aliens, 1):
-            boom_sound.play()
             Explosion(alien)
             Explosion(player)
             SCORE = SCORE + 1
             player.kill()
 
         for alien in pygame.sprite.groupcollide(shots, aliens, 1, 1).keys():
-            boom_sound.play()
             Explosion(alien)
             SCORE = SCORE + 1
 
         for bomb in pygame.sprite.spritecollide(player, bombs, 1):
-            boom_sound.play()
             Explosion(player)
             Explosion(bomb)
             player.kill()
@@ -412,16 +380,18 @@ def main(winstyle = 0):
         pygame.sprite.groupcollide(bosslefts, bombs, 0, 1)
         pygame.sprite.groupcollide(bossrights, bombs, 0, 1)
 
+        # When shields are still up
         if shield.health > 0:
             if pygame.sprite.groupcollide(shields, shots, 0, 1):
                 shield.health = shield.health - 1
 
+        # When shields have been destoryed
         else:
             if pygame.sprite.groupcollide(shields, shots, 1, 1):
                 Bossleft.speed = -5
                 Bossright.speed = 7
 
-
+        # Boss collision detection
         if len(shields) == 0:
             if pygame.sprite.groupcollide(bosslefts, shots, 1, 1):
                 SCORE = SCORE + 5
@@ -437,11 +407,7 @@ def main(winstyle = 0):
         #cap the framerate
         clock.tick(40)
 
-    if pygame.mixer:
-        pygame.mixer.music.fadeout(1000)
-
     # Final screen and score displaying
-
     finalscreen = load_image('finalscreen.png', 0)
     screen.blit(finalscreen, (0,0))
     pygame.display.flip()
