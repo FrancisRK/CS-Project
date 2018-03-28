@@ -176,7 +176,7 @@ class Shield(pygame.sprite.Sprite):
 #        self.facing = 0
         self.frame = 0
 #        if self.facing == 0:
-        self.rect.center = (320,300)
+        self.rect.center = (320,260)
 
     def update(self):
         self.rect.move_ip(0, 0)
@@ -250,6 +250,16 @@ class Score(pygame.sprite.Sprite):
             self.image = self.font.render(msg, 0, self.color)
 
 
+class Finalscore(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.font = pygame.font.Font(None, 50)
+        self.font.set_italic(1)
+        self.color = Color('white')
+        msg = "Score: %d" % SCORE
+        self.image = self.font.render(msg, 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = SCREENRECT.center
 
 def main(winstyle = 0):
     # Initialize pygame
@@ -273,8 +283,8 @@ def main(winstyle = 0):
     img = load_image('explosion1.gif', 0)
     Explosion.images = [img, pygame.transform.flip(img, 1, 1)]
     Alien.images = load_images('alien1.gif', 'alien2.gif', 'alien3.gif')
-    Bossleft.images = [load_image('bossleftsmall.png', 1)]
-    Bossright.images = [load_image('bossrightsmall.png', 1)]
+    Bossleft.images = [load_image('bossleftsmallv2.png', 1)]
+    Bossright.images = [load_image('bossrightsmallv2.png', 1)]
     Shield.images = load_images('shield1.gif','shield2.gif','shield3.gif')
     Bomb.images = [load_image('bomb.gif', 0)]
     Shot.images = [load_image('shot.gif', 0)]
@@ -337,7 +347,6 @@ def main(winstyle = 0):
     shield = Shield()
     if pygame.font:
         all.add(Score())
-
 
     while player.alive():
 
@@ -410,7 +419,7 @@ def main(winstyle = 0):
         else:
             if pygame.sprite.groupcollide(shields, shots, 1, 1):
                 Bossleft.speed = -5
-                Bossright.speed = 10
+                Bossright.speed = 7
 
 
         if len(shields) == 0:
@@ -430,7 +439,18 @@ def main(winstyle = 0):
 
     if pygame.mixer:
         pygame.mixer.music.fadeout(1000)
-    pygame.time.wait(1000)
+
+    # Final screen and score displaying
+
+    finalscreen = load_image('finalscreen.png', 0)
+    screen.blit(finalscreen, (0,0))
+    pygame.display.flip()
+    all.empty()
+    all.add(Finalscore())
+    dirty = all.draw(screen)
+    pygame.display.update(dirty)
+
+    pygame.time.wait(2000)
     pygame.quit()
 
 
