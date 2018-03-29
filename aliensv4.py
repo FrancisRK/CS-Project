@@ -121,11 +121,7 @@ class Bossleft(pygame.sprite.Sprite):
         self.rect.move_ip(Bossleft.speed,0)
         if not SCREENRECT.colliderect(self.rect):
             self.kill()
-#            Bossleft.speed = -Bossleft.speed
-#            self.rect.top = self.rect.bottom + 1
-#            self.rect = self.rect.clamp(SCREENRECT)
-#        self.frame = self.frame + 1
-#        self.image = self.images[self.frame//self.animcycle%3]
+
 
 class Bossright(pygame.sprite.Sprite):
     speed = 0
@@ -143,11 +139,7 @@ class Bossright(pygame.sprite.Sprite):
         self.rect.move_ip(Bossright.speed,0)
         if not SCREENRECT.colliderect(self.rect):
             self.kill()
-#            Bossright.speed = -Bossright.speed
-#            self.rect.top = self.rect.bottom + 1
-#            self.rect = self.rect.clamp(SCREENRECT)
-#        self.frame = self.frame + 1
-#        self.image = self.images[self.frame//self.animcycle%3]
+
 
 class Shield(pygame.sprite.Sprite):
     speed = 0
@@ -157,17 +149,14 @@ class Shield(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = self.images[0]
         self.rect = self.image.get_rect()
-        self.health = 10 + random.choice((0,5))
-#        self.facing = 0
+        self.health = 9 + random.choice((0,5))
         self.frame = 0
-#        if self.facing == 0:
         self.rect.center = (320,260)
 
     def update(self):
         self.rect.move_ip(0, 0)
         self.frame = self.frame + 1
         self.image = self.images[self.frame//self.animcycle%3]
-
 
 
 ################################################################################
@@ -187,6 +176,20 @@ class Explosion(pygame.sprite.Sprite):
         self.image = self.images[self.life//self.animcycle%2]
         if self.life <= 0: self.kill()
 
+class Points(pygame.sprite.Sprite):
+    defaultlife = 12
+    animcycle = 3
+    images = []
+    def __init__(self, actor):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = self.images[0]
+        self.rect = self.image.get_rect(center=actor.rect.midbottom)
+        self.life = self.defaultlife
+
+    def update(self):
+        self.life = self.life - 1
+        self.image = self.images[self.life//self.animcycle%2]
+        if self.life <= 0: self.kill()
 
 class Shot(pygame.sprite.Sprite):
     speed = -11
@@ -256,26 +259,28 @@ def main(winstyle = 0):
     bestdepth = pygame.display.mode_ok(SCREENRECT.size, winstyle, 32)
     screen = pygame.display.set_mode(SCREENRECT.size, winstyle, bestdepth)
 
-    #Load images, assign to sprite classes
-    #(do this before the classes are used, after screen setup)
+    # Load images, assign to sprite classes
+    # (do this before the classes are used, after screen setup)
     img = load_image('player1.gif', 0)
     Player.images = [img, pygame.transform.flip(img, 1, 0)]
     img = load_image('explosion1.gif', 0)
     Explosion.images = [img, pygame.transform.flip(img, 1, 1)]
+    Points.images = load_images('onepoint1.gif','onepoint2.gif','onepoint3.gif')
     Alien.images = load_images('alien1.gif', 'alien2.gif', 'alien3.gif')
     Bossleft.images = [load_image('bossleftsmallv2.png', 1)]
     Bossright.images = [load_image('bossrightsmallv2.png', 1)]
     Shield.images = load_images('shield1.gif','shield2.gif','shield3.gif')
     Bomb.images = [load_image('bomb.gif', 0)]
     Shot.images = [load_image('shot.gif', 0)]
+    finalscreen = load_image('finalscreen.png', 0)
 
-    #decorate the game window
+    # Decorate the game window
     icon = pygame.transform.scale(Alien.images[0], (32, 32))
     pygame.display.set_icon(icon)
     pygame.display.set_caption('Pygame Aliens')
     pygame.mouse.set_visible(0)
 
-    #create the background, tile the bgd image
+    # Create the background, tile the bgd image
     bgdtile = load_image('background.gif', 0)
     background = pygame.Surface(SCREENRECT.size)
     for x in range(0, SCREENRECT.width, bgdtile.get_width()):
@@ -302,6 +307,7 @@ def main(winstyle = 0):
     Shot.containers = shots, all
     Bomb.containers = bombs, all
     Explosion.containers = all
+    Points.containers = all
     Score.containers = all
 
     # Create Some Starting Values
@@ -322,20 +328,20 @@ def main(winstyle = 0):
 
     while player.alive():
 
-        #get input
+        # Get input
         for event in pygame.event.get():
             if event.type == QUIT or \
                 (event.type == KEYDOWN and event.key == K_ESCAPE):
                     return
         keystate = pygame.key.get_pressed()
 
-        # clear/erase the last drawn sprites
+        # Clear/erase the last drawn sprites
         all.clear(screen, background)
 
-        #update all the sprites
+        # Update all the sprites
         all.update()
 
-        #handle player input
+        # Handle player input
         direction = keystate[K_RIGHT] - keystate[K_LEFT]
         player.move(direction)
         firing = keystate[K_SPACE]
@@ -350,25 +356,30 @@ def main(winstyle = 0):
             Alien()
             alienreload = ALIEN_RELOAD
 
-#        if SCORE == 10 and len(bosslefts) < 1:
+#        if (SCORE/10).is_integer() and len(bosslefts) < 1:
 #            Bossleft()
+#            Bossright()
+#            shield = Shield()
 
         # Drop bombs
         for a in aliens:
             if a and not int(random.random() * BOMB_ODDS):
                 Bomb(a)
 
-        # Detect collisions
+        # Collision detection for aliens and player
         for alien in pygame.sprite.spritecollide(player, aliens, 1):
             Explosion(alien)
             Explosion(player)
             SCORE = SCORE + 1
             player.kill()
 
+        # Collision detection for aliens and shots
         for alien in pygame.sprite.groupcollide(shots, aliens, 1, 1).keys():
             Explosion(alien)
+            Points(alien)
             SCORE = SCORE + 1
 
+        # Collision detection for bombs and player
         for bomb in pygame.sprite.spritecollide(player, bombs, 1):
             Explosion(player)
             Explosion(bomb)
@@ -376,26 +387,34 @@ def main(winstyle = 0):
 
 ################################################################################
 
+        # Collision detection for bombs
         pygame.sprite.groupcollide(shields, bombs, 0, 1)
         pygame.sprite.groupcollide(bosslefts, bombs, 0, 1)
         pygame.sprite.groupcollide(bossrights, bombs, 0, 1)
 
-        # When shields are still up
-        if shield.health > 0:
-            if pygame.sprite.groupcollide(shields, shots, 0, 1):
-                shield.health = shield.health - 1
+        # Collsion for shield and shots
+        if len(shields) > 0:
+            if shield.health > 0:
+                for shot in pygame.sprite.groupcollide(shots, shields, 1, 0).keys():
+                    shield.health = shield.health - 1
+                    Points(shot)
 
-        # When shields have been destoryed
-        else:
-            if pygame.sprite.groupcollide(shields, shots, 1, 1):
-                Bossleft.speed = -5
-                Bossright.speed = 7
+        # Collision for shield and shots on final hit
+            else:
+                for shield in pygame.sprite.groupcollide(shields, shots, 0, 0).keys():
+                    for shot in pygame.sprite.groupcollide(shots, shields, 1, 1).keys():
+                        Explosion(shield)
+                        Points(shot)
+                        Bossleft.speed = -5
+                        Bossright.speed = 7
 
-        # Boss collision detection
+        # Collision detection for boss and shots
         if len(shields) == 0:
-            if pygame.sprite.groupcollide(bosslefts, shots, 1, 1):
+            for bossleft in pygame.sprite.groupcollide(bosslefts, shots, 1, 1):
+                Explosion(bossleft)
                 SCORE = SCORE + 5
-            if pygame.sprite.groupcollide(bossrights, shots, 1, 1):
+            for bossright in pygame.sprite.groupcollide(bossrights, shots, 1, 1):
+                Explosion(bossright)
                 SCORE = SCORE + 10
 
 ################################################################################
@@ -407,8 +426,9 @@ def main(winstyle = 0):
         #cap the framerate
         clock.tick(40)
 
+    pygame.time.wait(500)
+
     # Final screen and score displaying
-    finalscreen = load_image('finalscreen.png', 0)
     screen.blit(finalscreen, (0,0))
     pygame.display.flip()
     all.empty()
@@ -418,7 +438,6 @@ def main(winstyle = 0):
 
     pygame.time.wait(2000)
     pygame.quit()
-
 
 
 #call the "main" function if running this script
