@@ -103,7 +103,6 @@ class Alien(pygame.sprite.Sprite):
         self.frame = self.frame + 1
         self.image = self.images[self.frame//self.animcycle%3]
 
-################################################################################
 
 class Bossleft(pygame.sprite.Sprite):
     speed = 0
@@ -140,7 +139,6 @@ class Bossright(pygame.sprite.Sprite):
         if not SCREENRECT.colliderect(self.rect):
             self.kill()
 
-
 class Shield(pygame.sprite.Sprite):
     speed = 0
     animcycle = 12
@@ -149,7 +147,6 @@ class Shield(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = self.images[0]
         self.rect = self.image.get_rect()
-        self.health = 9 + random.choice((0,5))
         self.frame = 0
         self.rect.center = (320,260)
 
@@ -159,7 +156,23 @@ class Shield(pygame.sprite.Sprite):
         self.image = self.images[self.frame//self.animcycle%3]
 
 
-################################################################################
+class Shieldbutton(pygame.sprite.Sprite):
+    speed = 0
+    animcycle = 12
+    images = []
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = self.images[0]
+        self.rect = self.image.get_rect()
+        self.health = 9 + random.choice((0,5))
+        self.frame = 0
+        self.rect.center = (320,280)
+
+    def update(self):
+        self.rect.move_ip(0, 0)
+        self.frame = self.frame + 1
+        self.image = self.images[self.frame//self.animcycle%3]
+
 
 class Explosion(pygame.sprite.Sprite):
     defaultlife = 12
@@ -176,6 +189,7 @@ class Explosion(pygame.sprite.Sprite):
         self.image = self.images[self.life//self.animcycle%2]
         if self.life <= 0: self.kill()
 
+
 class Points(pygame.sprite.Sprite):
     defaultlife = 12
     animcycle = 3
@@ -190,6 +204,7 @@ class Points(pygame.sprite.Sprite):
         self.life = self.life - 1
         self.image = self.images[self.life//self.animcycle%2]
         if self.life <= 0: self.kill()
+
 
 class Shot(pygame.sprite.Sprite):
     speed = -11
@@ -224,12 +239,12 @@ class Bomb(pygame.sprite.Sprite):
 class Score(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.font = pygame.font.Font(None, 20)
+        self.font = pygame.font.Font(None, 30)
         self.font.set_italic(1)
-        self.color = Color('white')
+        self.color = Color('yellow')
         self.lastscore = -1
         self.update()
-        self.rect = self.image.get_rect().move(10, 450)
+        self.rect = self.image.get_rect().move(10, 400)
 
     def update(self):
         if SCORE != self.lastscore:
@@ -243,7 +258,7 @@ class Finalscore(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.font = pygame.font.Font(None, 50)
         self.font.set_italic(1)
-        self.color = Color('white')
+        self.color = Color('yellow')
         msg = "Score: %d" % SCORE
         self.image = self.font.render(msg, 0, self.color)
         self.rect = self.image.get_rect()
@@ -266,10 +281,11 @@ def main(winstyle = 0):
     img = load_image('explosion1.gif', 0)
     Explosion.images = [img, pygame.transform.flip(img, 1, 1)]
     Points.images = load_images('onepoint1.gif','onepoint2.gif','onepoint3.gif')
-    Alien.images = load_images('alien1.gif', 'alien2.gif', 'alien3.gif')
+    Alien.images = load_images('newalien1.gif', 'newalien2.gif', 'newalien3.gif')
     Bossleft.images = [load_image('bossleftsmallv2.png', 1)]
     Bossright.images = [load_image('bossrightsmallv2.png', 1)]
     Shield.images = load_images('shield1.gif','shield2.gif','shield3.gif')
+    Shieldbutton.images = load_images('shieldbutton1.gif','shieldbutton2.gif','shieldbutton3.gif')
     Bomb.images = [load_image('bomb.gif', 0)]
     Shot.images = [load_image('shot.gif', 0)]
     finalscreen = load_image('finalscreen.png', 0)
@@ -281,7 +297,7 @@ def main(winstyle = 0):
     pygame.mouse.set_visible(0)
 
     # Create the background, tile the bgd image
-    bgdtile = load_image('background.gif', 0)
+    bgdtile = load_image('background1.gif', 0)
     background = pygame.Surface(SCREENRECT.size)
     for x in range(0, SCREENRECT.width, bgdtile.get_width()):
         background.blit(bgdtile, (x, 0))
@@ -292,6 +308,7 @@ def main(winstyle = 0):
     aliens = pygame.sprite.Group()
     bosslefts = pygame.sprite.GroupSingle()
     bossrights = pygame.sprite.GroupSingle()
+    shieldbuttons = pygame.sprite.Group()
     shields = pygame.sprite.Group()
     shots = pygame.sprite.Group()
     bombs = pygame.sprite.Group()
@@ -303,6 +320,7 @@ def main(winstyle = 0):
     Alien.containers = aliens, all, lastalien
     Bossleft.containers = bosslefts, all
     Bossright.containers = bossrights, all
+    Shieldbutton.containers = shieldbuttons, all
     Shield.containers = shields, all
     Shot.containers = shots, all
     Bomb.containers = bombs, all
@@ -318,11 +336,15 @@ def main(winstyle = 0):
 
     # Initialize our starting sprites
     global SCORE
+    global BOMB_ODDS
+    global timestarted
+    timestarted = 0
     player = Player()
     Alien() #note, this 'lives' because it goes into a sprite group
     Bossleft()
     Bossright()
-    shield = Shield()
+    Shield()
+    shieldbutton = Shieldbutton()
     if pygame.font:
         all.add(Score())
 
@@ -380,27 +402,30 @@ def main(winstyle = 0):
 ################################################################################
 
         # Collision detection for bombs
-        pygame.sprite.groupcollide(shields, bombs, 0, 1)
+        pygame.sprite.groupcollide(shields, shots, 0, 1)
         pygame.sprite.groupcollide(bosslefts, bombs, 0, 1)
         pygame.sprite.groupcollide(bossrights, bombs, 0, 1)
 
         # Collsion for shield and shots
-        if len(shields) > 0:
-            if shield.health > 0:
-                for shot in pygame.sprite.groupcollide(shots, shields, 1, 0).keys():
-                    shield.health = shield.health - 1
+        if len(shieldbuttons) > 0:
+            if shieldbutton.health > 0:
+                for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 0).keys():
+                    shieldbutton.health = shieldbutton.health - 1
                     Points(shot)
 
         # Collision for shield and shots on final hit
             else:
-                for shield in pygame.sprite.groupcollide(shields, shots, 0, 0).keys():
-                    for shot in pygame.sprite.groupcollide(shots, shields, 1, 1).keys():
+                for shieldbutton in pygame.sprite.groupcollide(shieldbuttons, shots, 0, 0).keys():
+                    for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 1).keys():
+                        for shield in shields:
+                            shield.kill()
                         Points(shot)
-                        Bossleft.speed = -5
-                        Bossright.speed = 7
+#                        rightspeed =
+                        Bossleft.speed = -3
+                        Bossright.speed = 6
 
         # Collision detection for boss and shots
-        if len(shields) == 0:
+        if len(shieldbuttons) == 0:
             for bossleft in pygame.sprite.groupcollide(bosslefts, shots, 1, 1):
                 Explosion(bossleft)
                 SCORE = SCORE + 5
@@ -416,6 +441,18 @@ def main(winstyle = 0):
 
         #cap the framerate
         clock.tick(40)
+
+        #increase bomb droprate, reduce timestep to speed up or increase to slow down
+        if BOMB_ODDS == 500 and timestarted == 0:
+            timestep = 0
+            timestarted = 1
+        if BOMB_ODDS > 400 and timestep >= 10:
+            BOMB_ODDS = BOMB_ODDS - 1
+            timestep = 0
+        else:
+            if timestep > 10:
+                timestep = 0
+            timestep = timestep + 1
 
     pygame.time.wait(500)
 
