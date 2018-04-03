@@ -2,16 +2,16 @@
 
 import random, os.path
 
-#import basic pygame modules
+# Import basic pygame modules
 import pygame
 from pygame.locals import *
 
-#see if we can load more than standard BMP
+# See if we can load more than standard BMP
 if not pygame.image.get_extended():
     raise SystemExit("Sorry, extended image module required")
 
 
-#game constants
+# Game constants
 MAX_SHOTS      = 2       #most player bullets onscreen
 ALIEN_ODDS     = 22      #chances a new alien appears
 BOMB_ODDS      = 500     #chances a new bomb will drop
@@ -378,10 +378,14 @@ def main(winstyle = 0):
             Alien()
             alienreload = ALIEN_RELOAD
 
-#        if (SCORE/10).is_integer() and len(bosslefts) < 1:
-#            Bossleft()
-#            Bossright()
-#            shield = Shield()
+        # Spawn new boss
+        if SCORE % 20 == 0 and len(bosslefts) < 1 and len(bossrights) < 1:
+            Bossleft.speed = 0
+            Bossright.speed = 0
+            Bossleft()
+            Bossright()
+            Shield()
+            shieldbutton = Shieldbutton()
 
         # Drop bombs
         for a in aliens:
@@ -399,9 +403,7 @@ def main(winstyle = 0):
             Explosion(bomb)
             player.kill()
 
-################################################################################
-
-        # Collision detection for bombs
+        # Collision detection for bombs/shots and invulnerable sprites
         pygame.sprite.groupcollide(shields, shots, 0, 1)
         pygame.sprite.groupcollide(bosslefts, bombs, 0, 1)
         pygame.sprite.groupcollide(bossrights, bombs, 0, 1)
@@ -420,29 +422,30 @@ def main(winstyle = 0):
                         for shield in shields:
                             shield.kill()
                         Points(shot)
-#                        rightspeed =
-                        Bossleft.speed = -3
-                        Bossright.speed = 6
+                        rightspeed = random.choice((2,6))
+                        leftspeed = rightspeed - 8
+                        Bossleft.speed = leftspeed
+                        Bossright.speed = rightspeed
+                        shieldbutton.health = 9 + random.choice((0,5))
 
         # Collision detection for boss and shots
         if len(shieldbuttons) == 0:
             for bossleft in pygame.sprite.groupcollide(bosslefts, shots, 1, 1):
                 Explosion(bossleft)
-                SCORE = SCORE + 5
+                SCORE = SCORE + (abs(leftspeed)*2)
             for bossright in pygame.sprite.groupcollide(bossrights, shots, 1, 1):
                 Explosion(bossright)
-                SCORE = SCORE + 10
+                SCORE = SCORE + (rightspeed*2)
 
-################################################################################
 
-        #draw the scene
+        # Draw the scene
         dirty = all.draw(screen)
         pygame.display.update(dirty)
 
-        #cap the framerate
+        # Cap the framerate
         clock.tick(40)
 
-        #increase bomb droprate, reduce timestep to speed up or increase to slow down
+        # Increase bomb droprate, reduce timestep -> more /increase -> fewer
         if BOMB_ODDS == 500 and timestarted == 0:
             timestep = 0
             timestarted = 1
@@ -468,5 +471,5 @@ def main(winstyle = 0):
     pygame.quit()
 
 
-#call the "main" function if running this script
+# Call the "main" function if running this script
 if __name__ == '__main__': main()
