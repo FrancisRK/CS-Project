@@ -25,6 +25,14 @@ main_dir = os.path.split(os.path.abspath(__file__))[0]
 
 # Define utility functions
 
+class Record:
+
+    def __init__(self,filename):
+        self.file=open(filename,'w')
+
+    def write(self,event,score,comment):
+        self.file.write(str(pygame.time.get_ticks())+" "+str(event)+" "+str(score)+" "+str(comment)+"\n")
+
 def load_image(file, transparent):
     "loads an image, prepares it for play"
     file = os.path.join(main_dir, 'data', file)
@@ -56,7 +64,7 @@ def load_images(*files):
 class Player(pygame.sprite.Sprite):
     speed = 10
     bounce = 24
-    gun_offset = -11
+    gun_offset = 0
     images = []
     def __init__(self):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -194,8 +202,9 @@ class Points(pygame.sprite.Sprite):
     defaultlife = 12
     animcycle = 3
     images = []
-    def __init__(self, actor):
+    def __init__(self, actor, imagelist):
         pygame.sprite.Sprite.__init__(self, self.containers)
+        self.images = imagelist
         self.image = self.images[0]
         self.rect = self.image.get_rect(center=actor.rect.midbottom)
         self.life = self.defaultlife
@@ -265,6 +274,10 @@ class Finalscore(pygame.sprite.Sprite):
         self.rect.center = SCREENRECT.center
 
 def main(winstyle = 0):
+
+    # Define the data output
+    record=Record("transcript.dat")
+
     # Initialize pygame
     pygame.display.init()
     pygame.font.init()
@@ -276,18 +289,29 @@ def main(winstyle = 0):
 
     # Load images, assign to sprite classes
     # (do this before the classes are used, after screen setup)
-    img = load_image('player1.gif', 0)
+    img = load_image('newplayer.gif', 0)
     Player.images = [img, pygame.transform.flip(img, 1, 0)]
     img = load_image('explosion1.gif', 0)
     Explosion.images = [img, pygame.transform.flip(img, 1, 1)]
-    Points.images = load_images('onepoint1.gif','onepoint2.gif','onepoint3.gif')
+    points0 = load_images('onepoint1.gif','onepoint2.gif','onepoint3.gif')
+    points1 = load_images('onepoint1.gif','onepoint2.gif','onepoint3.gif')
+    points2 = load_images('twopoint1.gif','twopoint2.gif','twopoint3.gif')
+    points3 = load_images('threepoint1.gif','threepoint2.gif','threepoint3.gif')
+    points4 = load_images('fourpoint1.gif','fourpoint2.gif','fourpoint3.gif')
+    points5 = load_images('fivepoint1.gif','fivepoint2.gif','fivepoint3.gif')
+    points6 = load_images('sixpoint1.gif','sixpoint2.gif','sixpoint3.gif')
+    points7 = load_images('sevenpoint1.gif','sevenpoint2.gif','sevenpoint3.gif')
+    points8 = load_images('eightpoint1.gif','eightpoint2.gif','eightpoint3.gif')
+    points9 = load_images('ninepoint1.gif','ninepoint2.gif','ninepoint3.gif')
+    points10 = load_images('tenpoint1.gif','tenpoint2.gif','tenpoint3.gif')
+    pointimages = [points0, points1, points2, points3, points4, points5, points6, points7, points8, points9, points10]
     Alien.images = load_images('newalien1.gif', 'newalien2.gif', 'newalien3.gif')
     Bossleft.images = [load_image('bossleftsmallv2.png', 1)]
     Bossright.images = [load_image('bossrightsmallv2.png', 1)]
     Shield.images = load_images('shield1.gif','shield2.gif','shield3.gif')
     Shieldbutton.images = load_images('shieldbutton1.gif','shieldbutton2.gif','shieldbutton3.gif')
-    Bomb.images = [load_image('bomb.gif', 0)]
-    Shot.images = [load_image('shot.gif', 0)]
+    Bomb.images = [load_image('newbomb.gif', 0)]
+    Shot.images = [load_image('newshot.gif', 0)]
     finalscreen = load_image('finalscreen.png', 0)
 
     # Decorate the game window
@@ -380,6 +404,7 @@ def main(winstyle = 0):
 
         # Spawn new boss
         if SCORE % 20 == 0 and len(bosslefts) < 1 and len(bossrights) < 1:
+            record.write("boss_spawn",SCORE,"")
             Bossleft.speed = 0
             Bossright.speed = 0
             Bossleft()
@@ -390,11 +415,12 @@ def main(winstyle = 0):
         # Drop bombs
         for a in aliens:
             if a and not int(random.random() * BOMB_ODDS):
+                record.write("bomb_spawn",SCORE,"")
                 Bomb(a)
 
         # Collision detection for aliens and shots
         for alien in pygame.sprite.groupcollide(shots, aliens, 1, 1).keys():
-            Points(alien)
+            Points(alien, pointimages[1])
             SCORE = SCORE + 1
 
         # Collision detection for bombs and player
@@ -413,7 +439,7 @@ def main(winstyle = 0):
             if shieldbutton.health > 0:
                 for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 0).keys():
                     shieldbutton.health = shieldbutton.health - 1
-                    Points(shot)
+                    Points(shot, pointimages[0])
 
         # Collision for shield and shots on final hit
             else:
@@ -421,8 +447,8 @@ def main(winstyle = 0):
                     for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 1).keys():
                         for shield in shields:
                             shield.kill()
-                        Points(shot)
-                        rightspeed = random.choice((2,6))
+                        Points(shot, pointimages[0])
+                        rightspeed = random.randint(2,6)
                         leftspeed = rightspeed - 8
                         Bossleft.speed = leftspeed
                         Bossright.speed = rightspeed
@@ -431,11 +457,11 @@ def main(winstyle = 0):
         # Collision detection for boss and shots
         if len(shieldbuttons) == 0:
             for bossleft in pygame.sprite.groupcollide(bosslefts, shots, 1, 1):
-                Explosion(bossleft)
-                SCORE = SCORE + (abs(leftspeed)*2)
+                Points(bossleft, pointimages[abs(leftspeed)])
+                SCORE = SCORE + (abs(leftspeed))
             for bossright in pygame.sprite.groupcollide(bossrights, shots, 1, 1):
-                Explosion(bossright)
-                SCORE = SCORE + (rightspeed*2)
+                Points(bossright, pointimages[rightspeed])
+                SCORE = SCORE + (rightspeed)
 
 
         # Draw the scene
