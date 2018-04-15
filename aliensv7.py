@@ -268,10 +268,29 @@ class Finalscore(pygame.sprite.Sprite):
         self.font = pygame.font.Font(None, 50)
         self.font.set_italic(1)
         self.color = Color('yellow')
-        msg = "Score: %d" % SCORE
+        msg = "Final Score: %d" % SCORE
         self.image = self.font.render(msg, 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = SCREENRECT.center
+
+class Timer(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.font = pygame.font.Font(None, 30)
+        self.font.set_italic(1)
+        self.color = Color('yellow')
+        self.currenttime = 60
+        startingtime = 60
+        msg = "Time left: %d" % startingtime
+        self.image = self.font.render(msg, 0, self.color)
+        self.rect = self.image.get_rect().move(510, 400)
+
+    def update(self):
+        if timeleft != self.currenttime:
+            self.currenttime = timeleft
+            msg = "Time left: %d" % timeleft
+            self.image = self.font.render(msg, 0, self.color)
+
 
 def main(winstyle = 0):
 
@@ -354,17 +373,18 @@ def main(winstyle = 0):
 
     # Create Some Starting Values
     global score
+    global SCORE
+    global BOMB_ODDS
+    global timestarted
+    global timeleft
+    timestarted = 0
+    timeleft = 60000
     alienreload = ALIEN_RELOAD
     kills = 0
     clock = pygame.time.Clock()
 
 
-
     # Initialize our starting sprites
-    global SCORE
-    global BOMB_ODDS
-    global timestarted
-    timestarted = 0
     player = Player()
     Alien() #note, this 'lives' because it goes into a sprite group
     Bossleft()
@@ -373,6 +393,7 @@ def main(winstyle = 0):
     shieldbutton = Shieldbutton()
     if pygame.font:
         all.add(Score())
+        all.add(Timer())
 
     while player.alive():
 
@@ -489,6 +510,11 @@ def main(winstyle = 0):
             if timestep > 10:
                 timestep = 0
             timestep = timestep + 1
+
+        # Track time remaining
+        timeleft = int((60000 - pygame.time.get_ticks())/1000)
+        if timeleft <= 0:
+            player.kill()
 
     pygame.time.wait(500)
 
