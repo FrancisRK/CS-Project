@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import random, os.path
+from datetime import datetime
 
 # Import basic pygame modules
 import pygame
@@ -172,7 +173,7 @@ class Shieldbutton(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = self.images[0]
         self.rect = self.image.get_rect()
-        self.health = 9 + random.choice((0,5))
+        self.health = 1
         self.frame = 0
         self.rect.center = (320,280)
 
@@ -279,11 +280,11 @@ class Timer(pygame.sprite.Sprite):
         self.font = pygame.font.Font(None, 30)
         self.font.set_italic(1)
         self.color = Color('yellow')
-        self.currenttime = 60
-        startingtime = 60
+        self.currenttime = 300
+        startingtime = 300
         msg = "Time left: %d" % startingtime
         self.image = self.font.render(msg, 0, self.color)
-        self.rect = self.image.get_rect().move(510, 400)
+        self.rect = self.image.get_rect().move(500, 400)
 
     def update(self):
         if timeleft != self.currenttime:
@@ -295,7 +296,7 @@ class Timer(pygame.sprite.Sprite):
 def main(winstyle = 0):
 
     # Define the data output
-    record=Record("transcript.dat")
+    record=Record(os.path.normpath(os.path.join(os.getcwd(), "log_data/", datetime.now().strftime("%Y_%m_%d-%H_%M_%S")+".dat")))
 
     # Initialize pygame
     pygame.display.init()
@@ -391,6 +392,7 @@ def main(winstyle = 0):
     Bossright()
     Shield()
     shieldbutton = Shieldbutton()
+    record.write("boss_spawned","--",0,"")
     if pygame.font:
         all.add(Score())
         all.add(Timer())
@@ -426,7 +428,8 @@ def main(winstyle = 0):
             alienreload = ALIEN_RELOAD
 
         # Spawn new boss
-        if SCORE % 20 == 0 and SCORE != 0 and len(bosslefts) < 1 and len(bossrights) < 1:
+#        if SCORE % 20 == 0 and SCORE != 0 and len(bosslefts) < 1 and len(bossrights) < 1:
+        if len(bosslefts) < 1 and len(bossrights) < 1 and pygame.time.get_ticks() % 10000 < 500:
             Bossleft.speed = 0
             Bossright.speed = 0
             Bossleft()
@@ -439,7 +442,7 @@ def main(winstyle = 0):
         for a in aliens:
             if a and not int(random.random() * BOMB_ODDS):
                 Bomb(a)
-                record.write("bomb_spawned","--",SCORE,"")
+                #record.write("bomb_spawned","--",SCORE,"")
 
         # Collision detection for aliens and shots
         for alien in pygame.sprite.groupcollide(shots, aliens, 1, 1).keys():
@@ -451,8 +454,9 @@ def main(winstyle = 0):
         for bomb in pygame.sprite.spritecollide(player, bombs, 1):
             Explosion(player)
             Explosion(bomb)
-            record.write("player_destroyed","--",SCORE,"")
-            player.kill()
+            SCORE = SCORE - 5
+            record.write("player_hit","-5",SCORE,"")
+
 
         # Collision detection for bombs/shots and invulnerable sprites
         pygame.sprite.groupcollide(shields, shots, 0, 1)
@@ -461,13 +465,13 @@ def main(winstyle = 0):
 
         # Collsion for shield and shots
         if len(shieldbuttons) > 0:
-            if shieldbutton.health > 0:
-                for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 0).keys():
-                    shieldbutton.health = shieldbutton.health - 1
-                    Points(shot, pointimages[0])
+#            if shieldbutton.health > 0:
+#                for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 0).keys():
+#                    shieldbutton.health = shieldbutton.health - 1
+#                    Points(shot, pointimages[0])
 
         # Collision for shield and shots on final hit
-            else:
+#            else:
                 for shieldbutton in pygame.sprite.groupcollide(shieldbuttons, shots, 0, 0).keys():
                     for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 1).keys():
                         for shield in shields:
@@ -478,7 +482,7 @@ def main(winstyle = 0):
                         leftspeed = rightspeed - 8
                         Bossleft.speed = leftspeed
                         Bossright.speed = rightspeed
-                        shieldbutton.health = 9 + random.choice((0,5))
+                        record.write("boss_moving","--","--","bossleft speed: "+str(abs(leftspeed))+", bossright speed: "+str(rightspeed))
 
         # Collision detection for boss and shots
         if len(shieldbuttons) == 0:
@@ -512,7 +516,7 @@ def main(winstyle = 0):
             timestep = timestep + 1
 
         # Track time remaining
-        timeleft = int((60000 - pygame.time.get_ticks())/1000)
+        timeleft = int((300000 - pygame.time.get_ticks())/1000)
         if timeleft <= 0:
             player.kill()
 
