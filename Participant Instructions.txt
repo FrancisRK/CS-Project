@@ -1,0 +1,41 @@
+Study of human decision making using a computer game
+
+-----
+
+Participant Instructions:
+
+-> Aim: To obtain as high a score as possible in 7 minutes 30 secodns of playtime.
+
+-> Grand Prize: The participant with the highest score will receive a box of
+	Thornton's chocolates upon completion of the study experiments.
+
+-----
+
+Game Rules:
+
+-> You will control a spaceship which can fire shots at enemy aliens and bosses.
+
+-> Use LEFT/RIGHT to control the spaceship, use SPACEBAR to shoot shots.
+
+-> Small alien ships are worth +1 point
+
+-> A boss will spawn from time to time in the center of the screen,
+	made of a green left and blue right section as well as a shield which 
+	protects it from below. To attack the boss, you must deactivate the shield
+ 	by shooting the red button.
+
+-> Once the shield is down, the two parts of the boss will fly to the edges of
+	the screen to escape. Shooting either of these parts can
+	potentially give BIG points!
+
+-> If you are hit by any of the bombs which the aliens drop, you will
+	lose 10 points, so be careful!
+
+-----
+
+Data Privacy:
+
+-> Data obtained from your playthough will be used on a study of human decision
+	making.
+
+-> The data will be used anonymously and will only be used for the study.

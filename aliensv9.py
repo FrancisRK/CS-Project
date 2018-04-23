@@ -588,6 +588,8 @@ def main(winstyle = 0):
         # Collision detection for boss and shots
         if len(shieldbuttons) == 0:
             for bossleft in pygame.sprite.groupcollide(bosslefts, shots, 1, 1):
+                for bossright in bossrights:
+                    bossright.kill()
                 reward = mu_left.get_reward()
                 #Points(bossleft, pointimages[abs(leftspeed)])
                 Points(bossleft, pointimages[reward])
@@ -596,6 +598,8 @@ def main(winstyle = 0):
                 record.write("Current Score: "+str(SCORE)+", ", "Points Change: +"+str(reward)+", ", "Event: Bossleft destroyed, ",
                     "Mu_left: "+str(mu_left.mu)+", Mu_right: "+str(mu_right.mu))
             for bossright in pygame.sprite.groupcollide(bossrights, shots, 1, 1):
+                for bossleft in bosslefts:
+                    bossleft.kill()
                 reward = mu_right.get_reward()
                 #Points(bossright, pointimages[rightspeed])
                 Points(bossright, pointimages[reward])
