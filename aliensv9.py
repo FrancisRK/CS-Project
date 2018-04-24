@@ -1,6 +1,7 @@
 # A game by Francis Riazi Kermani - 2018
 # Space invaders-esque game to analyse
-# optimality of human behaviour
+# optimality of human behaviour for
+# final year thesis
 
 # Import python modules
 import random, os.path
@@ -132,12 +133,12 @@ class Bossright(pygame.sprite.Sprite):
 
 
 class Boss_reward:
-    def __init__(self,theta,sigma_r,sigma_mu,lamb):
+    def __init__(self,theta,sigma_r,sigma_mu,lamb,mu):
         self.theta=theta
         self.sigma_r=sigma_r
         self.sigma_mu=sigma_mu
         self.lamb=lamb
-        self.mu=random.uniform(0.0,2*self.theta)
+        self.mu=mu
 
     def get_reward(self):
         return self.clip(int(random.gauss(self.mu,self.sigma_r)))
@@ -327,9 +328,9 @@ def main(winstyle = 0):
     # Initialize the data output
     name = input("Enter participant name: ")
     age = input("Enter age: ")
-    gender = input("Enter gender (M/F/O): ")
-    handedness = input("Enter handedness (L/R/A): ")
-    vision = input("Confirm that you have normal or 'corrected to normal' vision (Y/N): ")
+    gender = input("Enter gender - (M)ale/(F)emale/(O)ther: ")
+    handedness = input("Enter handedness - (L)eft/(R)ight/(A)mbidextrous: ")
+    vision = input("Confirm that you have normal or 'corrected to normal' vision - (Y)es/(N)o): ")
     file_name = name+"-"+datetime.now().strftime("%Y_%m_%d-%H_%M_%S")+".dat"
     record = Record(os.path.normpath(os.path.join(os.getcwd(), "log_data/",file_name)))
     record.short_write("Name: "+name)
@@ -337,9 +338,12 @@ def main(winstyle = 0):
     record.short_write("Gender: "+gender)
     record.short_write("Handedness: "+handedness)
     record.short_write("Vision: "+vision+"\n"+"-----")
-    log = open("log_key",'a')
-    log.write(name+" "+file_name+"\n")
-    log.close()
+#    log = open("log_key",'a')
+#    log.write(name+" "+file_name+"\n")
+#    log.close()
+
+    file_name = "boss-"name+"-"+datetime.now().strftime("%Y_%m_%d-%H_%M_%S")+".dat"
+    bossrecord = Record(os.path.normpath(os.path.join(os.getcwd(), "log_data/",file_name)))
 
     # Initialize pygame
     pygame.display.init()
@@ -437,7 +441,7 @@ def main(winstyle = 0):
     screen.blit(background, (0,0))
     pygame.display.flip()
 
-    # Initialize Game Groups
+    # Initialize game groups
     aliens = pygame.sprite.Group()
     bosslefts = pygame.sprite.GroupSingle()
     bossrights = pygame.sprite.GroupSingle()
@@ -461,7 +465,7 @@ def main(winstyle = 0):
     Points.containers = all
     Score.containers = all
 
-    # Create Some Starting Values
+    # Create some starting values
     global SCORE
     global BOMB_ODDS
     global BOMB_THRESHOLD
@@ -479,17 +483,14 @@ def main(winstyle = 0):
     sigma_r = 4.0
     sigma_mu = 2.8
     lamb = 0.9836
-    mu_left = Boss_reward(theta,sigma_r,sigma_mu,lamb)
-    mu_right = Boss_reward(theta,sigma_r,sigma_mu,lamb)
+    initial_mu = random.shuffle([20, 30])
+    mu_left = Boss_reward(theta,sigma_r,sigma_mu,lamb,initial_mu[0])
+    mu_right = Boss_reward(theta,sigma_r,sigma_mu,lamb,initial_mu[1])
 
     # Initialize our starting sprites
     player = Player()
-    Alien() #note, this 'lives' because it goes into a sprite group
-#    Bossleft()
-#    Bossright()
-#    Shield()
-#    shieldbutton = Shieldbutton()
-#    record.write("boss_spawned","--",0,"")
+    Alien()
+
     if pygame.font:
         all.add(Score())
         all.add(Timer())
@@ -528,7 +529,7 @@ def main(winstyle = 0):
             alienreload = ALIEN_RELOAD
 
         # Spawn new boss
-        if len(bosslefts) < 1 and len(bossrights) < 1 and pygame.time.get_ticks() % 10000 < 500:
+        if len(bosslefts) < 1 and len(bossrights) < 1 and pygame.time.get_ticks() > 2000 and pygame.time.get_ticks() % 10000 < 500:
             mu_right.update()
             mu_left.update()
             Bossleft.speed = 0
@@ -566,24 +567,17 @@ def main(winstyle = 0):
 
         # Collsion for shield and shots
         if len(shieldbuttons) > 0:
-#            if shieldbutton.health > 0:
-#                for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 0).keys():
-#                    shieldbutton.health = shieldbutton.health - 1
-#                    Points(shot, pointimages[0])
-
-        # Collision for shield and shots on final hit
-#            else:
-                for shieldbutton in pygame.sprite.groupcollide(shieldbuttons, shots, 0, 0).keys():
-                    for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 1).keys():
-                        for shield in shields:
-                            shield.kill()
-                            record.write("Current Score: "+str(SCORE)+", ", "Points Change: 0, ", "Event: Boss shield destroyed", "")
-                        Points(shot, pointimages[0])
-                        rightspeed = 4
-                        leftspeed = -4
-                        Bossleft.speed = leftspeed
-                        Bossright.speed = rightspeed
-                        record.write("Current Score: "+str(SCORE)+", ", "Points Change: 0, ", "Event: Boss moving", "")
+            for shieldbutton in pygame.sprite.groupcollide(shieldbuttons, shots, 0, 0).keys():
+                for shot in pygame.sprite.groupcollide(shots, shieldbuttons, 1, 1).keys():
+                    for shield in shields:
+                        shield.kill()
+                        record.write("Current Score: "+str(SCORE)+", ", "Points Change: 0, ", "Event: Boss shield destroyed", "")
+                    Points(shot, pointimages[0])
+                    rightspeed = 5
+                    leftspeed = -5
+                    Bossleft.speed = leftspeed
+                    Bossright.speed = rightspeed
+                    record.write("Current Score: "+str(SCORE)+", ", "Points Change: 0, ", "Event: Boss moving", "")
 
         # Collision detection for boss and shots
         if len(shieldbuttons) == 0:
@@ -591,22 +585,20 @@ def main(winstyle = 0):
                 for bossright in bossrights:
                     bossright.kill()
                 reward = mu_left.get_reward()
-                #Points(bossleft, pointimages[abs(leftspeed)])
                 Points(bossleft, pointimages[reward])
                 SCORE = SCORE + reward
-                #record.write("bossleft_destroyed",reward,mu_left.mu,SCORE)
                 record.write("Current Score: "+str(SCORE)+", ", "Points Change: +"+str(reward)+", ", "Event: Bossleft destroyed, ",
                     "Mu_left: "+str(mu_left.mu)+", Mu_right: "+str(mu_right.mu))
+                bossrecord.write(str(left)+" "+str(reward)+" "+str(mu_left.mu)+" "+str(mu_right.mu))
             for bossright in pygame.sprite.groupcollide(bossrights, shots, 1, 1):
                 for bossleft in bosslefts:
                     bossleft.kill()
                 reward = mu_right.get_reward()
-                #Points(bossright, pointimages[rightspeed])
                 Points(bossright, pointimages[reward])
                 SCORE = SCORE + reward
-                #record.write("bossleft_destroyed",reward,mu_right.mu,SCORE)
-                record.write("Current Score: "+str(SCORE)+", ", "Points Change: +"+str(reward)+", ", "Event: Bossleft destroyed, ",
+                record.write("Current Score: "+str(SCORE)+", ", "Points Change: +"+str(reward)+", ", "Event: Bossright destroyed, ",
                     "Mu_left: "+str(mu_left.mu)+", Mu_right: "+str(mu_right.mu))
+                bossrecord.write(str(right)+" "+str(reward)+" "+str(mu_left.mu)+" "+str(mu_right.mu))
 
 
         # Draw the scene
