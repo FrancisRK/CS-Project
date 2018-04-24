@@ -338,9 +338,6 @@ def main(winstyle = 0):
     record.short_write("Gender: "+gender)
     record.short_write("Handedness: "+handedness)
     record.short_write("Vision: "+vision+"\n"+"-----")
-#    log = open("log_key",'a')
-#    log.write(name+" "+file_name+"\n")
-#    log.close()
 
     file_name = "boss-"+name+"-"+datetime.now().strftime("%Y_%m_%d-%H_%M_%S")+".dat"
     bossrecord = Record(os.path.normpath(os.path.join(os.getcwd(), "log_data/",file_name)))
