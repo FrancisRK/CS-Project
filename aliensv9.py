@@ -342,7 +342,7 @@ def main(winstyle = 0):
 #    log.write(name+" "+file_name+"\n")
 #    log.close()
 
-    file_name = "boss-"name+"-"+datetime.now().strftime("%Y_%m_%d-%H_%M_%S")+".dat"
+    file_name = "boss-"+name+"-"+datetime.now().strftime("%Y_%m_%d-%H_%M_%S")+".dat"
     bossrecord = Record(os.path.normpath(os.path.join(os.getcwd(), "log_data/",file_name)))
 
     # Initialize pygame
@@ -483,7 +483,8 @@ def main(winstyle = 0):
     sigma_r = 4.0
     sigma_mu = 2.8
     lamb = 0.9836
-    initial_mu = random.shuffle([20, 30])
+    initial_mu = [20, 30]
+    random.shuffle(initial_mu)
     mu_left = Boss_reward(theta,sigma_r,sigma_mu,lamb,initial_mu[0])
     mu_right = Boss_reward(theta,sigma_r,sigma_mu,lamb,initial_mu[1])
 
@@ -589,7 +590,7 @@ def main(winstyle = 0):
                 SCORE = SCORE + reward
                 record.write("Current Score: "+str(SCORE)+", ", "Points Change: +"+str(reward)+", ", "Event: Bossleft destroyed, ",
                     "Mu_left: "+str(mu_left.mu)+", Mu_right: "+str(mu_right.mu))
-                bossrecord.write(str(left)+" "+str(reward)+" "+str(mu_left.mu)+" "+str(mu_right.mu))
+                bossrecord.short_write("left "+str(reward)+" "+str(mu_left.mu)+" "+str(mu_right.mu))
             for bossright in pygame.sprite.groupcollide(bossrights, shots, 1, 1):
                 for bossleft in bosslefts:
                     bossleft.kill()
@@ -598,7 +599,7 @@ def main(winstyle = 0):
                 SCORE = SCORE + reward
                 record.write("Current Score: "+str(SCORE)+", ", "Points Change: +"+str(reward)+", ", "Event: Bossright destroyed, ",
                     "Mu_left: "+str(mu_left.mu)+", Mu_right: "+str(mu_right.mu))
-                bossrecord.write(str(right)+" "+str(reward)+" "+str(mu_left.mu)+" "+str(mu_right.mu))
+                bossrecord.short_write("right "+str(reward)+" "+str(mu_left.mu)+" "+str(mu_right.mu))
 
 
         # Draw the scene
